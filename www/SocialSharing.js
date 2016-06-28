@@ -93,6 +93,14 @@ SocialSharing.prototype.saveToPhotoAlbum = function (fileOrFileArray, successCal
   cordova.exec(successCallback, this._getErrorCallback(errorCallback, "saveToPhotoAlbum"), "SocialSharing", "saveToPhotoAlbum", [this._asArray(fileOrFileArray)]);
 };
 
+//baveendran
+SocialSharing.prototype.shareViaTwitterToReceiver = function (receiver, message, fileOrFileArray, url, successCallback, errorCallback) {
+  cordova.exec(successCallback, this._getErrorCallback(errorCallback, "shareViaTwitterToReceiver"), "SocialSharing", "shareViaTwitterMessage", [message, null, this._asArray(fileOrFileArray), url, receiver]);
+};
+SocialSharing.prototype.shareViaMessengerToReceiver = function (receiver, message, fileOrFileArray, url, successCallback, errorCallback) {
+  cordova.exec(successCallback, this._getErrorCallback(errorCallback, "shareViaMessengerToReceiver"), "SocialSharing", "shareViaMessenger", [message, null, this._asArray(fileOrFileArray), url, receiver]);
+};
+
 SocialSharing.prototype._asArray = function (param) {
   if (param == null) {
     param = [];

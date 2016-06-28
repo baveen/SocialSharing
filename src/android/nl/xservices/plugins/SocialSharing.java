@@ -49,10 +49,16 @@ public class SocialSharing extends CordovaPlugin {
   private static final String ACTION_SHARE_VIA_SMS_EVENT = "shareViaSMS";
   private static final String ACTION_SHARE_VIA_EMAIL_EVENT = "shareViaEmail";
 
+  private static final String ACTION_SHARE_VIA_MESSENGER_EVENT = "shareViaMessenger";
+  private static final String ACTION_SHARE_VIA_TWITTERMESSAGE_EVENT = "shareViaTwitterMessage";
+
   private static final int ACTIVITY_CODE_SEND__BOOLRESULT = 1;
   private static final int ACTIVITY_CODE_SEND__OBJECT = 2;
   private static final int ACTIVITY_CODE_SENDVIAEMAIL = 3;
   private static final int ACTIVITY_CODE_SENDVIAWHATSAPP = 4;
+  private static final int ACTIVITY_CODE_SENDVIAMESSENGER = 5;
+  private static final int ACTIVITY_CODE_SENDVIATWITTER_DM = 6;
+
   private static final String WWW = "www/";
   private static final String RELATIVE_PREFIX = "./";
 
@@ -110,7 +116,21 @@ public class SocialSharing extends CordovaPlugin {
         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "not available"));
         return false;
       }
-    } else if (ACTION_SHARE_VIA.equals(action)) {
+    }
+    //baveendran
+    else if (ACTION_SHARE_VIA_TWITTERMESSAGE_EVENT.equals(action)) {
+      if (notEmpty(args.getString(4))) {
+        return shareViaTwitterDirectMessage(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), args.getString(4));
+      }else{
+        return doSendIntent(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), "twitter", null, false, true);
+      }
+    }else if (ACTION_SHARE_VIA_MESSENGER_EVENT.equals(action)) {
+			if (notEmpty(args.getString(4))) {
+				return shareViaMessengerAppDirectly(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), args.getString(4));
+			} else {
+				return doSendIntent(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), "com.facebook.orca", null, false, true);
+			}
+		}else if (ACTION_SHARE_VIA.equals(action)) {
       return doSendIntent(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), args.getString(4), null, false, true);
     } else if (ACTION_SHARE_VIA_SMS_EVENT.equals(action)) {
       return invokeSMSIntent(callbackContext, args.getJSONObject(0), args.getString(1));
@@ -120,6 +140,7 @@ public class SocialSharing extends CordovaPlugin {
       callbackContext.error("socialSharing." + action + " is not a supported function. Did you mean '" + ACTION_SHARE_EVENT + "'?");
       return false;
     }
+
   }
 
   private boolean isEmailAvailable() {
@@ -812,4 +833,36 @@ public class SocialSharing extends CordovaPlugin {
   public static String sanitizeFilename(String name) {
     return name.replaceAll("[:\\\\/*?|<> ]", "_");
   }
+  private boolean shareViaMessengerAppDirectly(final CallbackContext callbackContext, String message, final String subject, final JSONArray files, final String url, final String number) {
+  		final SocialSharing plugin = this;
+  		try {
+  			final Intent intent = new Intent(Intent.ACTION_VIEW,Uri.parse("fb://messaging/" + Long.parseLong(number)));
+  			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+  			cordova.startActivityForResult(plugin, intent, ACTIVITY_CODE_SENDVIAMESSENGER);
+  		} catch (Exception e) {
+  			cordova.startActivityForResult(plugin, new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/messages/")), ACTIVITY_CODE_SENDVIAMESSENGER);
+  			callbackContext.error(e.getMessage());
+  			
+  		}
+  		return true;
+  	}
+
+  private boolean shareViaTwitterDirectMessage(final CallbackContext callbackContext, String message, final String subject, final JSONArray files, final String url, final String id) {
+	final SocialSharing plugin = this;
+  try {
+
+          Intent openNewIntent = new Intent();
+          String dmPackage = "com.twitter.android";
+          String dmClass = ".DMActivity";
+          openNewIntent.setComponent(new ComponentName(dmPackage,dmPackage+dmClass));
+          openNewIntent.putExtra("user_ids",new long[]{Long.parseLong(id)});
+          openNewIntent.putExtra("keyboard_open", true);
+          cordova.startActivityForResult(plugin, openNewIntent, ACTIVITY_CODE_SENDVIATWITTER_DM);
+      } catch (Exception e) {
+          cordova.startActivityForResult(plugin, new Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/messages/")), ACTIVITY_CODE_SENDVIATWITTER_DM);
+          
+      }
+return true;
+
+}
 }
